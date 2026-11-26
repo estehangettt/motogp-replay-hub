@@ -1,0 +1,12 @@
+.env
+*.py[cod]
+__pycache__/
+.venv/
+venv/
+*.keystore
+*.jks
+.gradle/
+android/.gradle/
+android/build/
+android/app/build/
+.DS_Store
