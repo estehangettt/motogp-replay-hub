@@ -1,76 +1,58 @@
 # MotoGP Replay Hub Pro
 
-Android-first MotoGP replay interface and local Flask backend, designed to run from Termux.
+Aplikasi pribadi: data resmi MotoGP (kalender, sesi, hasil, klasemen, info sirkuit) dan
+pemutar untuk video milik Anda sendiri. Tidak berafiliasi dengan MotoGP/Dorna.
+Tidak mengambil stream dari situs pihak ketiga. Siaran ulang resmi: VideoPass.
 
-## Architecture
+## Menjalankan di Termux
 
-- Flask backend: `app.py` on `127.0.0.1:5000`
-- Frontend: `templates/` and `static/`
-- Android WebView wrapper: `android/`
-- CI: GitHub Actions builds a debug APK on pushes to `main`
-- PulseLive: season/event/circuit data from the read-only MotoGP API
+    pkg update -y
+    pkg install -y python git gh openjdk-17
+    cd ~/motogp-replay-hub
+    pip install -r requirements.txt
+    termux-wake-lock
+    python app.py
 
-## Important runtime note
+Lalu buka aplikasi APK, atau http://127.0.0.1:5000 di browser HP.
 
-The Android wrapper loads `http://127.0.0.1:5000`. The Flask server must be running on the same Android device in Termux. The wrapper does not embed Python or start the Flask process by itself.
+## Logo di header
 
-## Termux setup
+Simpan file logo PNG Anda sebagai `static/img/logo.png`, lalu muat ulang.
+File ini tidak ikut di-upload ke GitHub. Merek milik pemiliknya; pakai pribadi saja.
 
-```bash
-pkg update -y
-pkg install python git openjdk-17 -y
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
-cp .env.example .env
-python app.py
-```
+## Menambah video
 
-Open `http://127.0.0.1:5000` in a browser. Keep the Termux process alive while using the WebView APK.
+Letakkan file yang Anda miliki haknya dengan pola:
 
-## Android build
+    media/<tahun>/<KODE_EVENT>/<kelas>/<SESI>.mp4
 
-GitHub Actions compiles the APK. Before the first push, create one signing keystore and configure repository secrets:
+- kelas: motogp, moto2, moto3
+- SESI: FP1, FP2, PR, Q1, Q2, SPR, WUP, RAC
+- KODE_EVENT: kode di dropdown GP (aplikasi juga menampilkan path lengkapnya)
 
-- `ANDROID_DEBUG_KEYSTORE_BASE64`
-- `ANDROID_DEBUG_KEYSTORE_PASSWORD`
-- `ANDROID_DEBUG_KEY_ALIAS`
-- `ANDROID_DEBUG_KEY_PASSWORD`
+Format: MP4 (H.264 + AAC), WebM, atau folder HLS berisi master.m3u8.
 
-Generate a persistent keystore locally (Termux):
+Memakai folder di penyimpanan HP:
 
-```bash
-keytool -genkeypair -v -keystore motogp-debug.keystore -storetype JKS \
-  -alias motogpdebug -keyalg RSA -keysize 2048 -validity 10000 \
-  -storepass CHANGE_THIS_STORE_PASSWORD -keypass CHANGE_THIS_KEY_PASSWORD \
-  -dname "CN=MotoGP Replay Hub Pro, OU=Android, O=estehangettt, L=Yogyakarta, ST=DIY, C=ID"
-base64 -w 0 motogp-debug.keystore
-```
+    termux-setup-storage
+    REPLAY_MEDIA_DIR=~/storage/shared/ReplayHub python app.py
 
-Copy the base64 output into GitHub repository Settings → Secrets and variables → Actions. Store the two passwords and alias in the matching secrets. Keep this keystore safe and reuse it for every build; changing it prevents in-place APK updates.
+## Pemilih resolusi
 
-## GitHub
+Aktif untuk HLS multi-resolusi. Buat dari video Anda:
 
-Repository target: `https://github.com/estehangettt/motogp-replay-hub`
+    pkg install -y ffmpeg
+    bash tools/make_hls.sh video.mp4 media/2026/INA/motogp/RAC
 
-```bash
-git init
-git branch -M main
-git add .
-git commit -m "Initial MotoGP Replay Hub Pro project"
-git remote add origin https://github.com/estehangettt/motogp-replay-hub.git
-git push -u origin main
-```
+MP4 biasa hanya punya satu resolusi. Menu More > Uji player memakai stream tes
+publik untuk mencoba pemilih kualitas.
 
-## Data and media access
+## APK
 
-PulseLive circuit layout, flag and numeric fields are read from the event payload. The API documentation notes that circuit data is embedded in `event.circuit`, that the SVG/PNG layout paths are in `circuit.track.assets`, and that flags come from `event.assets` where `type == FLAG`.
+Setiap push ke `main` menjalankan GitHub Actions dan menerbitkan APK di tab
+Releases. versionCode mengikuti nomor run.
 
-The replay scraper extracts regular iframe URLs from the supplied category page. It does not unpack obfuscated scripts or defeat authentication, paywalls, HTTP 403 responses, DRM, or other access controls. The media proxy is intended only for media URLs you are authorized to access and will return upstream access errors as errors.
-
-## Versioning
-
-Increase both `versionCode` and `versionName` in `android/app/build.gradle` for each distributable update. Keep the application ID and signing keystore unchanged to allow an update install over the previous build.
-
-## License and trademarks
-
-This is an unofficial personal learning project. MotoGP and related marks belong to their respective owners. Use official data and media in accordance with their terms.
+PENTING:
+- `android/app/debug.keystore` harus tetap sama. Jika hilang atau diganti, APK
+  baru tidak bisa dipasang sebagai update. Simpan cadangannya.
+- Buat repo **private** karena keystore ikut di-commit.

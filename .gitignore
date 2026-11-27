@@ -1,12 +1,12 @@
-.env
-*.py[cod]
 __pycache__/
-.venv/
-venv/
-*.keystore
-*.jks
-.gradle/
+*.pyc
+.cache/
+media/*
+!media/.gitkeep
 android/.gradle/
 android/build/
 android/app/build/
-.DS_Store
+android/local.properties
+*.apk
+# Logo bermerek hanya disimpan di HP, tidak diunggah.
+static/img/logo.png

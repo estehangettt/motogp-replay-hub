@@ -1,139 +1,143 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#09090b">
-  <meta name="description" content="MotoGP Replay Hub Pro">
-  <title>MotoGP Replay Hub Pro</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="theme-color" content="#09090B">
+  <title>Replay Hub Pro</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,600;0,800;1,800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  <script defer src="https://cdn.jsdelivr.net/npm/hls.js@1.5.18/dist/hls.min.js"></script>
-  <script defer src="{{ url_for('static', filename='script.js') }}"></script>
 </head>
-<body>
-  <div class="ambient ambient-one"></div><div class="ambient ambient-two"></div>
-  <header class="topbar">
-    <a class="brand" href="#" aria-label="MotoGP Replay Hub Pro home">
-      <span class="brand-mark">Moto<span>GP</span></span>
-      <span class="brand-sub">REPLAY HUB <b>PRO</b></span>
-    </a>
-    <div class="top-actions">
-      <button class="icon-button" id="searchToggle" aria-label="Cari event">⌕</button>
-      <button class="avatar" aria-label="Profil">●</button>
-    </div>
-  </header>
-
-  <main class="page-shell">
-    <section class="hero" id="hero">
-      <div class="hero-shade"></div>
-      <div class="hero-content">
-        <span class="eyebrow"><i></i> THE RACE NEVER ENDS</span>
-        <h1 id="heroTitle">THE HOME OF<br><em>MOTORSPORT</em></h1>
-        <p id="heroSubtitle">Relive every moment. Every lap. Every battle.</p>
+<body data-class="motogp">
+  <main id="app">
+    <header class="topbar">
+      <div class="brand">
+        {% if has_logo %}<img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo">{% endif %}
+        <span>Replay Hub <b>Pro</b></span>
       </div>
-      <div class="hero-dots"><i class="active"></i><i></i><i></i></div>
-    </section>
+      <button class="icon-btn" data-action="search" aria-label="Cari">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+      </button>
+    </header>
 
-    <section class="toolbar glass">
-      <div class="field-label">SEASON</div>
-      <select id="seasonSelect" aria-label="Pilih musim"><option value="2026">2026</option></select>
-      <button class="refresh-button" id="refreshEvents" title="Muat ulang">↻</button>
-    </section>
-
-    <section class="class-tabs" aria-label="Kelas balapan">
-      <button class="class-tab active" data-class="MotoGP">MotoGP</button>
-      <button class="class-tab" data-class="Moto2">Moto2</button>
-      <button class="class-tab" data-class="Moto3">Moto3</button>
-    </section>
-
-    <section class="section-heading">
-      <div><span class="eyebrow">RACE WEEKEND</span><h2>Choose your <em>session</em></h2></div>
-      <span class="live-pill"><i></i> REPLAY LIBRARY</span>
-    </section>
-
-    <section class="event-strip" id="eventStrip" aria-label="Pilih Grand Prix">
-      <div class="loading-line">Memuat kalender MotoGP…</div>
-    </section>
-
-    <section class="section-heading compact-heading">
-      <div><span class="eyebrow">ON DEMAND</span><h2>Session <em>library</em></h2></div>
-      <span class="muted" id="sessionCount">0 sessions</span>
-    </section>
-
-    <section class="source-panel glass">
-      <div class="source-copy">
-        <span class="eyebrow">REPLAY SOURCE</span>
-        <strong>Paste kategori replay</strong>
-        <small>Gunakan URL halaman sumber yang boleh lu akses.</small>
+    <section class="view active" id="view-home">
+      <div class="hero" id="hero">
+        <div class="hero-title"><i></i><h1 id="heroTitle">Memuat…</h1></div>
+        <p id="heroSub"></p>
+        <div class="dots" id="dots"></div>
       </div>
-      <div class="source-input-row">
-        <input id="categoryUrl" type="url" inputmode="url" placeholder="https://motomundo.net/..." autocomplete="url">
-        <button class="primary-button" id="loadCatalog">LOAD</button>
+
+      <label class="glass select-row">
+        <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+        <span>Season:</span>
+        <select id="season" aria-label="Pilih musim"></select>
+      </label>
+
+      <label class="glass select-row">
+        <svg viewBox="0 0 24 24"><path d="M5 21V4M5 4h13l-3 4 3 4H5"/></svg>
+        <span>GP:</span>
+        <select id="eventSelect" aria-label="Pilih Grand Prix"></select>
+      </label>
+
+      <div class="tabs" id="tabs">
+        <button class="tab active" data-class="motogp">MotoGP</button>
+        <button class="tab" data-class="moto2">Moto2</button>
+        <button class="tab" data-class="moto3">Moto3</button>
       </div>
-      <p class="inline-status" id="catalogStatus" role="status">Pilih event, lalu muat katalog replay.</p>
+
+      <p class="notice" id="homeNotice" hidden></p>
+      <div class="grid" id="sessions"></div>
     </section>
 
-    <section class="session-grid" id="sessionGrid">
-      <div class="empty-state glass"><span class="empty-icon">▶</span><b>Your next replay starts here</b><p>Masukkan URL kategori replay untuk menampilkan sesi.</p></div>
+    <section class="view" id="view-calendar">
+      <h2 class="section-title">Calendar</h2>
+      <input class="glass search" id="search" type="search" placeholder="Cari GP, sirkuit, atau negara">
+      <div class="list" id="calendar"></div>
     </section>
 
-    <section class="circuit-card glass" id="circuitCard">
-      <div class="circuit-heading"><span class="red-slash"></span><div><span class="eyebrow">TRACK DETAILS</span><h2>Circuit <em>Info</em></h2></div></div>
-      <div class="circuit-content">
-        <div class="track-art"><img id="trackImage" alt="Circuit layout" hidden><div id="trackFallback" class="track-fallback">TRACK<br>LAYOUT</div></div>
-        <div class="circuit-data">
-          <div class="circuit-name-row"><img id="countryFlag" alt="" hidden><div><h3 id="circuitName">Select a Grand Prix</h3><p id="circuitLocation">Circuit information from PulseLive</p></div></div>
-          <div class="stats-grid">
-            <div class="stat"><span>TRACK LENGTH</span><b id="trackLength">—</b></div>
-            <div class="stat"><span>CAPACITY</span><b id="capacity">—</b></div>
-            <div class="stat"><span>CORNERS</span><b id="corners">—</b></div>
-            <div class="stat"><span>OPENED</span><b id="opened">—</b></div>
-          </div>
+    <section class="view" id="view-standings">
+      <h2 class="section-title">Standings</h2>
+      <div class="glass select-row">
+        <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+        <span>Season:</span>
+        <select id="standingsSeason" aria-label="Musim klasemen"></select>
+        <button class="ctl" data-action="refresh-standings" aria-label="Muat ulang klasemen">
+          <svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 6.3M20 4v7h-7"/></svg>
+        </button>
+      </div>
+      <div class="tabs" id="standingsTabs">
+        <button class="tab active" data-class="motogp">MotoGP</button>
+        <button class="tab" data-class="moto2">Moto2</button>
+        <button class="tab" data-class="moto3">Moto3</button>
+      </div>
+      <div class="chip-row">
+        <div class="chips" id="standingsType">
+          <button class="chip active" data-value="riders">Riders</button>
+          <button class="chip" data-value="teams">Teams</button>
+          <button class="chip" data-value="constructors">Constr.</button>
+        </div>
+        <div class="chips" id="standingsMode">
+          <button class="chip active" data-value="table">Table</button>
+          <button class="chip" data-value="chart">Chart</button>
         </div>
       </div>
-      <p class="circuit-description" id="circuitDescription"></p>
+      <div class="glass standings" id="standings"></div>
+      <p class="muted" id="standingsNote"></p>
+    </section>
+
+    <section class="view" id="view-library">
+      <h2 class="section-title">Library</h2>
+      <p class="muted">Video milik Anda di folder <code>media/</code>.</p>
+      <div class="list" id="library"></div>
+    </section>
+
+    <section class="view" id="view-more">
+      <h2 class="section-title">More</h2>
+      <div class="list">
+        <a class="glass row" href="https://www.motogp.com/en/videopass"><span>MotoGP VideoPass (resmi)</span><b>›</b></a>
+        <a class="glass row" href="https://www.youtube.com/@motogp"><span>YouTube resmi MotoGP</span><b>›</b></a>
+        <button class="glass row" data-action="test-player"><span>Uji player (stream tes publik)</span><b>›</b></button>
+        <button class="glass row" data-action="reload"><span>Muat ulang aplikasi</span><b>›</b></button>
+      </div>
+      <p class="muted">Aplikasi pribadi, tidak berafiliasi dengan MotoGP maupun Dorna.</p>
     </section>
   </main>
 
-  <nav class="bottom-nav" aria-label="Navigasi utama">
-    <a class="nav-item active" href="#"><span>⌂</span>Home</a>
-    <a class="nav-item" href="#eventStrip"><span>▦</span>Calendar</a>
-    <a class="nav-item" href="#sessionGrid"><span>▷</span>Library</a>
-    <a class="nav-item" href="#circuitCard"><span>•••</span>More</a>
+  <nav class="bottom-nav glass" id="nav">
+    <button data-view="home" class="active"><svg viewBox="0 0 24 24"><path d="m3 11 9-8 9 8v10h-6v-6H9v6H3z"/></svg>Home</button>
+    <button data-view="calendar"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Calendar</button>
+    <button data-view="standings"><svg viewBox="0 0 24 24"><path d="M5 20v-8M12 20V4M19 20v-5"/></svg>Standings</button>
+    <button data-view="library"><svg viewBox="0 0 24 24"><path d="M7 4v16l13-8z"/></svg>Library</button>
+    <button data-view="more"><svg viewBox="0 0 24 24"><path d="M5 12h.01M12 12h.01M19 12h.01"/></svg>More</button>
   </nav>
 
-  <section class="player-overlay" id="playerOverlay" aria-hidden="true">
-    <div class="player-sheet">
-      <div class="player-topbar">
-        <button class="round-control" id="closePlayer" aria-label="Tutup player">‹</button>
-        <div class="player-top-actions"><button class="round-control" id="fullscreenButton" aria-label="Layar penuh">⛶</button></div>
+  <div class="modal" id="player" aria-hidden="true">
+    <div class="stage" id="stage">
+      <video id="video" playsinline preload="metadata"></video>
+      <div class="stage-top">
+        <button class="icon-btn" data-action="close" aria-label="Kembali"><svg viewBox="0 0 24 24"><path d="m15 5-7 7 7 7"/></svg></button>
+        <span id="playerTitle"></span>
+        <button class="icon-btn" data-action="fullscreen" aria-label="Layar penuh"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg></button>
       </div>
-      <div class="video-stage">
-        <video id="videoPlayer" playsinline preload="metadata"></video>
-        <div class="video-message" id="videoMessage">READY TO RACE</div>
-        <div class="player-controls glass">
-          <button id="playButton" class="control-button" aria-label="Putar atau jeda">▶</button>
-          <span class="time-display"><span id="currentTime">00:00</span><i>/</i><span id="duration">00:00</span></span>
-          <input id="seekBar" class="seek-bar" type="range" min="0" max="1000" value="0" aria-label="Posisi video">
-          <button id="muteButton" class="control-button" aria-label="Mute">◖</button>
-          <div class="quality-wrap">
-            <button id="qualityButton" class="control-button quality-button">AUTO⌄</button>
-            <div class="quality-menu" id="qualityMenu" hidden>
-              <button data-quality="-1">Auto</button>
-              <button data-quality="1080">1080p</button>
-              <button data-quality="720">720p</button>
-              <button data-quality="480">480p</button>
-              <button data-quality="360">360p</button>
-            </div>
-          </div>
-        </div>
+      <div class="stage-message" id="stageMessage" hidden></div>
+      <div class="quality-menu glass" id="qualityMenu" hidden></div>
+      <div class="controls glass" id="controls">
+        <button class="ctl" data-action="play" id="playBtn" aria-label="Putar atau jeda"></button>
+        <span class="time" id="time">00:00 / 00:00</span>
+        <input type="range" id="seek" min="0" max="1000" value="0" aria-label="Posisi video">
+        <button class="ctl" data-action="mute" id="muteBtn" aria-label="Suara"></button>
+        <button class="ctl" data-action="quality" aria-label="Kualitas video">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M10.5 3h3l.5 2.4 1.7 1 2.3-.8 1.5 2.6-1.8 1.6v2l1.8 1.6-1.5 2.6-2.3-.8-1.7 1-.5 2.4h-3l-.5-2.4-1.7-1-2.3.8-1.5-2.6 1.8-1.6v-2L4.5 8.2 6 5.600l2.3.8 1.7-1z"/></svg>
+        </button>
       </div>
-      <div class="player-caption"><span class="eyebrow">NOW PLAYING</span><h2 id="playingTitle">MotoGP Replay</h2><p id="playingSubtitle">Choose a session to start watching</p></div>
     </div>
-  </section>
-  <div class="toast" id="toast" role="status"></div>
+    <div class="player-body">
+      <div class="glass card" id="circuit"></div>
+      <div class="glass card" id="results" hidden></div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.15/dist/hls.min.js"></script>
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
